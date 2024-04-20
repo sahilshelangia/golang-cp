@@ -1,7 +1,6 @@
 package stack
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +9,8 @@ import (
 func Test_New(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		stack := New[int]()
-		assert.Equal(t, len(stack.items), 0)
+		assert.Equal(t, 0, stack.size)
+		assert.Nil(t, stack.head)
 	})
 }
 
@@ -18,46 +18,65 @@ func TestStack_Push(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		stack := New[int]()
 		stack.Push(1)
-		assert.Equal(t, 1, stack.items[0])
+		assert.Equal(t, 1, stack.head.value)
+		assert.Nil(t, stack.head.next)
+
+		stack.Push(2)
+		assert.Equal(t, 2, stack.head.value)
 	})
 }
 
 func Test_Pop(t *testing.T) {
-	t.Run("return_element_when_stack_is_not_empty", func(t *testing.T) {
+	t.Run("success_when_called_on_empty_stack", func(t *testing.T) {
 		stack := New[int]()
 		stack.Push(1)
-		element, err := stack.Pop()
-		assert.Equal(t, 1, element)
-		assert.Nil(t, err)
+		stack.Push(2)
+		stack.Pop()
+		assert.Equal(t, 1, stack.head.value)
+		stack.Pop()
+		assert.Nil(t, stack.head)
 	})
 
-	t.Run("return_error_when_stack_is_empty", func(t *testing.T) {
+	t.Run("panic_when_called_on_empty_stack", func(t *testing.T) {
 		stack := New[int]()
-		element, err := stack.Pop()
-		assert.Equal(t, 0, element)
-		assert.Equal(t, errors.New("stack is empty"), err)
+		defer func() {
+			if r := recover(); r == nil {
+				assert.Fail(t, "panic expected")
+			} else {
+				err, _ := r.(string)
+				assert.Equal(t, "can't perform operation, because stack is empty", err)
+			}
+		}()
+		stack.Pop()
 	})
 }
 
 func Test_Top(t *testing.T) {
-	t.Run("return_element_when_stack_is_not_empty", func(t *testing.T) {
+	t.Run("success_when_called_on_empty_stack", func(t *testing.T) {
 		stack := New[int]()
 		stack.Push(1)
-		element, err := stack.Top()
-		assert.Equal(t, 1, element)
-		assert.Nil(t, err)
+		stack.Push(2)
+		assert.Equal(t, 2, stack.Top())
+		stack.Pop()
+		assert.Equal(t, 1, stack.Top())
 	})
 
-	t.Run("return_error_when_stack_is_empty", func(t *testing.T) {
+	t.Run("panic_when_called_on_empty_stack", func(t *testing.T) {
 		stack := New[int]()
-		element, err := stack.Top()
-		assert.Equal(t, 0, element)
-		assert.Equal(t, errors.New("stack is empty"), err)
+		defer func() {
+			if r := recover(); r == nil {
+				assert.Fail(t, "panic expected")
+			} else {
+				err, _ := r.(string)
+				assert.Equal(t, "can't perform operation, because stack is empty", err)
+			}
+		}()
+		stack.Top()
 	})
 }
 
 func Test_Size(t *testing.T) {
-	t.Run("size_equal_to_1", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		stack := New[int]()
 		stack.Push(1)
 		assert.Equal(t, 1, stack.Size())
@@ -65,7 +84,7 @@ func Test_Size(t *testing.T) {
 }
 
 func Test_Empty(t *testing.T) {
-	t.Run("empty_stack", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		stack := New[int]()
 		assert.True(t, stack.Empty())
 	})
